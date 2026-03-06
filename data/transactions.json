@@ -1,0 +1,66 @@
+[
+    {
+        "id": "17721985426765g3byiwg2n5",
+        "name": "test mathéo",
+        "amount": 50,
+        "type": "depense",
+        "category": "loisirs",
+        "date": "2026-02-27"
+    },
+    {
+        "id": "1772198316422yveub4k0zl",
+        "name": "Test backend",
+        "amount": 42,
+        "type": "depense",
+        "category": "alimentation",
+        "date": "2026-02-27"
+    },
+    {
+        "id": "1",
+        "name": "Salaire mensuel",
+        "amount": 2200,
+        "type": "revenu",
+        "category": "salaire",
+        "date": "2026-02-01"
+    },
+    {
+        "id": "2",
+        "name": "Courses supermarche",
+        "amount": 85.5,
+        "type": "depense",
+        "category": "alimentation",
+        "date": "2026-02-03"
+    },
+    {
+        "id": "3",
+        "name": "Abonnement metro",
+        "amount": 75.2,
+        "type": "depense",
+        "category": "transport",
+        "date": "2026-02-05"
+    },
+    {
+        "id": "4",
+        "name": "Cinema",
+        "amount": 12,
+        "type": "depense",
+        "category": "loisirs",
+        "date": "2026-02-08"
+    },
+    {
+        "id": "5",
+        "name": "Loyer",
+        "amount": 650,
+        "type": "depense",
+        "category": "logement",
+        "date": "2026-02-10"
+    },
+    {
+        "id": "6",
+        "name": "Freelance site web",
+        "amount": 350,
+        "type": "revenu",
+        "category": "freelance",
+        "date": "2026-02-12"
+    }
+]

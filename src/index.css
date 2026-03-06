@@ -1,0 +1,627 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* variables pour le theme clair (bois moderne) */
+:root {
+    --bg-primary: #f5efe6;
+    --bg-secondary: #e8dfd5;
+    --bg-card: rgba(210, 190, 165, 0.35);
+    --bg-card-hover: rgba(210, 190, 165, 0.55);
+    --bg-input: rgba(255, 255, 255, 0.6);
+    --border-color: rgba(160, 130, 95, 0.25);
+    --border-hover: rgba(160, 130, 95, 0.5);
+    --text-primary: #3e2c1c;
+    --text-secondary: #7a6652;
+    --text-muted: #9c8b7a;
+    --accent: #8b6f47;
+    --accent-light: #a68960;
+    --accent-gradient: linear-gradient(135deg, #8b6f47, #6d5535);
+    --accent-glow: rgba(139, 111, 71, 0.3);
+    --income-color: #2e8b57;
+    --expense-color: #c0392b;
+    --balance-bg: linear-gradient(135deg, #8b6f47, #a68960, #8b6f47);
+    --shadow-sm: 0 2px 8px rgba(62, 44, 28, 0.08);
+    --shadow-md: 0 4px 16px rgba(62, 44, 28, 0.12);
+    --shadow-lg: 0 8px 32px rgba(62, 44, 28, 0.16);
+    --panel-radius: 14px;
+    --chart-border: rgba(245, 239, 230, 0.8);
+}
+
+/* variables pour le mode sombre */
+[data-theme="dark"] {
+    --bg-primary: #1a1410;
+    --bg-secondary: #241e18;
+    --bg-card: rgba(60, 48, 35, 0.5);
+    --bg-card-hover: rgba(70, 56, 40, 0.65);
+    --bg-input: rgba(255, 255, 255, 0.07);
+    --border-color: rgba(139, 111, 71, 0.2);
+    --border-hover: rgba(139, 111, 71, 0.4);
+    --text-primary: #e8dfd5;
+    --text-secondary: #b8a898;
+    --text-muted: #8a7a6a;
+    --accent: #c9a96e;
+    --accent-light: #d4b87a;
+    --accent-gradient: linear-gradient(135deg, #c9a96e, #a68a4e);
+    --accent-glow: rgba(201, 169, 110, 0.25);
+    --income-color: #4fc78a;
+    --expense-color: #e8655a;
+    --balance-bg: linear-gradient(135deg, #3e2c1c, #5a4230, #3e2c1c);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --chart-border: rgba(26, 20, 16, 0.8);
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    min-height: 100vh;
+    transition: background 0.4s ease, color 0.4s ease;
+}
+
+/* conteneur princiapl */
+#app {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+/* header avec logo et toggle */
+.app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.logo-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--accent);
+    box-shadow: var(--shadow-sm);
+}
+
+.logo-text h1 {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+}
+
+.logo-text .subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+    text-align: left;
+}
+
+/* bouton toggle mode sombre/clair */
+.theme-toggle {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    padding: 0.5rem 1rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+/* icone lune/soliel dans le bouton */
+.theme-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* carte du solde */
+.balance-card {
+    background: var(--balance-bg);
+    border-radius: var(--panel-radius);
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.balance-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.balance-card .label {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 0.5rem;
+}
+
+.balance-card .amount {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+/* les deux boites revenus / depenses */
+.summary-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-box {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(10px);
+    border-radius: var(--panel-radius);
+    padding: 1.2rem;
+    text-align: center;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.summary-box:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-md);
+}
+
+.summary-box .label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-muted);
+    margin-bottom: 0.4rem;
+}
+
+.summary-box .amount {
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.summary-box .amount.income {
+    color: var(--income-color);
+}
+
+.summary-box .amount.expense {
+    color: var(--expense-color);
+}
+
+/* grille principaile formulaire + graphique */
+.main-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    align-items: start;
+}
+
+@media (max-width: 700px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* panneau generique */
+.panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(12px);
+    border-radius: var(--panel-radius);
+    padding: 1.5rem;
+    transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.panel h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--accent);
+}
+
+/* selecteur de type revenu/depense */
+.type-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.type-btn {
+    flex: 1;
+    padding: 0.55rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-weight: 500;
+}
+
+.type-btn:hover {
+    border-color: var(--border-hover);
+}
+
+.type-btn.income-selected {
+    background: rgba(46, 139, 87, 0.12);
+    border-color: var(--income-color);
+    color: var(--income-color);
+}
+
+[data-theme="dark"] .type-btn.income-selected {
+    background: rgba(79, 199, 138, 0.12);
+}
+
+.type-btn.expense-selected {
+    background: rgba(192, 57, 43, 0.1);
+    border-color: var(--expense-color);
+    color: var(--expense-color);
+}
+
+[data-theme="dark"] .type-btn.expense-selected {
+    background: rgba(232, 101, 90, 0.12);
+}
+
+/* formulaire */
+.form-group {
+    margin-bottom: 0.9rem;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.65rem 0.9rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-input);
+    color: var(--text-primary);
+    font-size: 0.88rem;
+    font-family: 'Inter', sans-serif;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.form-group input::placeholder {
+    color: var(--text-muted);
+}
+
+/* bouton d'ajout */
+.btn-add {
+    width: 100%;
+    padding: 0.7rem;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent-gradient);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: transform 0.15s ease, box-shadow 0.2s ease;
+    margin-top: 0.3rem;
+}
+
+.btn-add:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.btn-add:active {
+    transform: translateY(0);
+}
+
+/* panneau du graphique - bien cadrer le contenu */
+.chart-panel {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.chart-tabs {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.8rem;
+}
+
+.chart-tab {
+    padding: 0.3rem 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.72rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.chart-tab:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.chart-tab.active {
+    background: var(--accent-glow);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+/* container du chart bien centre et contraint */
+.chart-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+    padding: 0.5rem 0;
+}
+
+.chart-wrapper canvas {
+    width: 100% !important;
+    height: auto !important;
+    max-height: 260px;
+}
+
+/* quand ya pas de data */
+.no-data {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    text-align: center;
+    padding: 2.5rem 0;
+}
+
+/* section historique */
+.history-section {
+    margin-top: 0;
+}
+
+/* header de l'historique avec le titre + bouton reset */
+.history-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.6rem;
+}
+
+.history-header h2 {
+    margin-bottom: 0;
+}
+
+/* bouton pour tout effacer */
+.btn-reset {
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--expense-color);
+    border-radius: 8px;
+    background: transparent;
+    color: var(--expense-color);
+    font-size: 0.78rem;
+    font-weight: 500;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-reset:hover {
+    background: var(--expense-color);
+    color: #fff;
+    box-shadow: 0 3px 12px rgba(192, 57, 43, 0.25);
+    transform: translateY(-1px);
+}
+
+.btn-reset:active {
+    transform: translateY(0);
+}
+
+[data-theme="dark"] .btn-reset:hover {
+    box-shadow: 0 3px 12px rgba(232, 101, 90, 0.2);
+}
+
+/* filtres par catégorie */
+.filter-row {
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.filter-btn {
+    padding: 0.35rem 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.filter-btn.active {
+    background: var(--accent-gradient);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+/* liste de transactions */
+.transactions-list {
+    list-style: none;
+}
+
+.transaction-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease, transform 0.15s ease;
+}
+
+.transaction-item:hover {
+    background: var(--bg-card-hover);
+    transform: translateX(4px);
+}
+
+.transaction-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+}
+
+.transaction-info .name {
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.transaction-info .category {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    text-transform: capitalize;
+}
+
+.transaction-info .date {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    opacity: 0.7;
+}
+
+.transaction-right {
+    display: flex;
+    align-items: center;
+}
+
+.transaction-amount {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.transaction-amount.positive {
+    color: var(--income-color);
+}
+
+.transaction-amount.negative {
+    color: var(--expense-color);
+}
+
+/* bouton supprimer */
+.btn-delete {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    transition: color 0.2s ease, background 0.2s ease;
+    margin-left: 0.7rem;
+}
+
+.btn-delete:hover {
+    color: var(--expense-color);
+    background: rgba(192, 57, 43, 0.08);
+}
+
+[data-theme="dark"] .btn-delete:hover {
+    background: rgba(232, 101, 90, 0.1);
+}
+
+/* animation des transations */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.transaction-item {
+    animation: slideIn 0.3s ease forwards;
+}
+
+/* transition gloable pour le changement de theme */
+.panel,
+.summary-box,
+.balance-card,
+.transaction-item,
+.filter-btn,
+.chart-tab,
+.type-btn,
+.form-group input,
+.form-group select,
+.theme-toggle {
+    transition: background 0.3s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* option du select en sombre */
+[data-theme="dark"] .form-group select option {
+    background: #241e18;
+    color: #e8dfd5;
+}
