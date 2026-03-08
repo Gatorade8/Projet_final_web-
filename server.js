@@ -7,22 +7,32 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const app = express()
-const PORT = 3001
+const PORT = process.env.PORT || 3001
 
 // en ESM y'a pas __dirname donc faut le reconstruir
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 // chemin vers le fichier json qui stock nos transactions
-const DATA_FILE = path.join(__dirname, 'data', 'transactions.json')
+const DATA_DIR = path.join(__dirname, 'data')
+const DATA_FILE = path.join(DATA_DIR, 'transactions.json')
+
+// on s'assure que le dossier data existe sinon ca va crash sur Render
+if (!fs.existsSync(DATA_DIR)) {
+    fs.mkdirSync(DATA_DIR, { recursive: true })
+}
 
 // middleware pour parser le json et autoriser les requete cross-origin
 app.use(cors())
 app.use(express.json())
 
+// on sert les fichiers statiques du front (le build de Vite)
+app.use(express.static(path.join(__dirname, 'dist')))
+
 // fonction utilitaire pour lire les trasactions depuis le fichier
 function readTransactions() {
     try {
+        if (!fs.existsSync(DATA_FILE)) return []
         const data = fs.readFileSync(DATA_FILE, 'utf-8')
         return JSON.parse(data)
     } catch (err) {
@@ -84,8 +94,13 @@ app.delete('/api/transactions', (req, res) => {
     res.json({ message: 'Toutes les transactions on ete supprimees' })
 })
 
+// pour toutes les autres routes on renvoie l'index.html de React (SPAs)
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'dist', 'index.html'))
+})
+
 // on demarre le serveur
 app.listen(PORT, () => {
-    console.log(`Serveur back-end demarre sur http://localhost:${PORT}`)
+    console.log(`Serveur demarre sur le port ${PORT}`)
     console.log(`Les donnees sont stockees dans ${DATA_FILE}`)
 })
