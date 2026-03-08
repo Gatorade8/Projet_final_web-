@@ -95,7 +95,7 @@ app.delete('/api/transactions', (req, res) => {
 })
 
 // pour toutes les autres routes on renvoie l'index.html de React (SPAs)
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'))
 })
 
