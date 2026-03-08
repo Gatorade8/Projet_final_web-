@@ -1,11 +1,10 @@
-import { useReducer, useEffect, useRef, useState, useCallback } from 'react'
-import { Chart, ArcElement, Tooltip, Legend, DoughnutController } from 'chart.js'
-
-// on enregistre les composant chart.js qu'on va utilser
-Chart.register(ArcElement, Tooltip, Legend, DoughnutController)
+import { useReducer, useEffect, useState, useCallback } from 'react'
+import TransactionForm from './components/TransactionForm'
+import BudgetChart from './components/BudgetChart'
+import TransactionList from './components/TransactionList'
 
 // les categories disponible pour les transactions
-const CATEGORIES = [
+export const CATEGORIES = [
     'alimentation',
     'transport',
     'loisirs',
@@ -16,13 +15,13 @@ const CATEGORIES = [
     'autre',
 ] as const
 
-type Category = typeof CATEGORIES[number]
+export type Category = typeof CATEGORIES[number]
 
 // le type d'une transaction (revenu ou depense)
-type TransactionType = 'revenu' | 'depense'
+export type TransactionType = 'revenu' | 'depense'
 
-// interface pour representer une transation
-interface Transaction {
+// type pour representer une transation
+export type Transaction = {
     id: string
     name: string
     amount: number
@@ -31,8 +30,20 @@ interface Transaction {
     date: string
 }
 
+// couleurs adaptees au theme bois pour le chart
+export const CATEGORY_COLORS: Record<string, string> = {
+    alimentation: '#d4a056',
+    transport: '#5b8c5a',
+    loisirs: '#c2785c',
+    logement: '#8b6f47',
+    sante: '#6b9e8a',
+    salaire: '#2e8b57',
+    freelance: '#7a9e7e',
+    autre: '#9c8b7a',
+}
+
 // l'etat gloal de notre app
-interface BudgetState {
+type BudgetState = {
     transactions: Transaction[]
 }
 
@@ -82,18 +93,6 @@ function budgetReducer(state: BudgetState, action: BudgetAction): BudgetState {
     }
 }
 
-// couleurs adaptees au theme bois pour le chart
-const CATEGORY_COLORS: Record<string, string> = {
-    alimentation: '#d4a056',
-    transport: '#5b8c5a',
-    loisirs: '#c2785c',
-    logement: '#8b6f47',
-    sante: '#6b9e8a',
-    salaire: '#2e8b57',
-    freelance: '#7a9e7e',
-    autre: '#9c8b7a',
-}
-
 function App() {
     // gestion du theme (clair / sombre)
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -103,18 +102,6 @@ function App() {
 
     // on charge les transaction au demarage
     const [state, dispatch] = useReducer(budgetReducer, { transactions: [] })
-    const [filter, setFilter] = useState<Category | 'tout'>('tout')
-    const [chartView, setChartView] = useState<'depenses' | 'revenus'>('depenses')
-
-    // les champ du formulaire
-    const [name, setName] = useState('')
-    const [amount, setAmount] = useState('')
-    const [type, setType] = useState<TransactionType>('depense')
-    const [category, setCategory] = useState<Category>('alimentation')
-
-    // ref pour le canvas du chart
-    const chartRef = useRef<HTMLCanvasElement>(null)
-    const chartInstance = useRef<Chart | null>(null)
 
     // on applique le theme sur le document
     useEffect(() => {
@@ -147,112 +134,13 @@ function App() {
     // le solde c'est revenus - depenses
     const solde = totalRevenu - totalDepense
 
-    // filtre les transactions selon la categorie selectionnee
-    const filteredTransactions = filter === 'tout'
-        ? state.transactions
-        : state.transactions.filter(t => t.category === filter)
-
-    // les transactions filtrées pour le graphique actuel
-    const chartTransactions = state.transactions.filter(
-        t => t.type === (chartView === 'depenses' ? 'depense' : 'revenu')
-    )
-
-    // met a jour le graphique quand les transactions changent
-    useEffect(() => {
-        if (!chartRef.current) return
-
-        // on detruit l'ancien graphique avant d'en creer un nouveau
-        if (chartInstance.current) {
-            chartInstance.current.destroy()
-            chartInstance.current = null
-        }
-
-        // on regroupe les montant par categorie
-        const grouped: Record<string, number> = {}
-        chartTransactions.forEach(t => {
-            grouped[t.category] = (grouped[t.category] || 0) + t.amount
-        })
-
-        const labels = Object.keys(grouped)
-        const data = Object.values(grouped)
-        const colors = labels.map(l => CATEGORY_COLORS[l] || '#9c8b7a')
-
-        if (labels.length === 0) return
-
-        // les couleurs du texte selon le theme
-        const labelColor = theme === 'dark' ? '#b8a898' : '#7a6652'
-        const borderCol = theme === 'dark' ? 'rgba(26, 20, 16, 0.8)' : 'rgba(245, 239, 230, 0.8)'
-
-        // creation du doughnut chart
-        chartInstance.current = new Chart(chartRef.current, {
-            type: 'doughnut',
-            data: {
-                labels: labels.map(l => l.charAt(0).toUpperCase() + l.slice(1)),
-                datasets: [{
-                    data: data,
-                    backgroundColor: colors,
-                    borderColor: borderCol,
-                    borderWidth: 3,
-                    hoverBorderWidth: 0,
-                    hoverOffset: 6,
-                }],
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: labelColor,
-                            font: { family: 'Inter', size: 11 },
-                            padding: 10,
-                            usePointStyle: true,
-                            pointStyleWidth: 8,
-                        },
-                    },
-                    tooltip: {
-                        backgroundColor: theme === 'dark' ? 'rgba(36, 30, 24, 0.95)' : 'rgba(62, 44, 28, 0.9)',
-                        titleFont: { family: 'Inter' },
-                        bodyFont: { family: 'Inter' },
-                        titleColor: '#fff',
-                        bodyColor: '#e8dfd5',
-                        padding: 10,
-                        cornerRadius: 8,
-                        callbacks: {
-                            label: (ctx) => {
-                                const val = ctx.parsed
-                                const total = data.reduce((a, b) => a + b, 0)
-                                const pourcent = ((val / total) * 100).toFixed(1)
-                                return ` ${ctx.label}: ${val.toFixed(2)} EUR (${pourcent}%)`
-                            }
-                        }
-                    },
-                },
-                cutout: '62%',
-            },
-        })
-
-        // cleanup quand le composent se demonte
-        return () => {
-            if (chartInstance.current) {
-                chartInstance.current.destroy()
-                chartInstance.current = null
-            }
-        }
-    }, [chartTransactions, theme])
-
     // handler pour ajouter une nouvele transaction
     // on envoi d'abord au back-end puis on met a jour le state
-    async function handleSubmit(e: React.FormEvent) {
-        e.preventDefault()
-
-        if (!name.trim() || !amount || parseFloat(amount) <= 0) return
-
+    async function handleAddTransaction(name: string, amount: number, type: TransactionType, category: Category) {
         const newTransaction: Transaction = {
             id: Date.now().toString() + Math.random().toString(36).substring(2),
-            name: name.trim(),
-            amount: parseFloat(parseFloat(amount).toFixed(2)),
+            name,
+            amount,
             type,
             category,
             date: new Date().toISOString().split('T')[0],
@@ -266,10 +154,6 @@ function App() {
                 body: JSON.stringify(newTransaction),
             })
             dispatch({ type: 'ADD_TRANSACTION', payload: newTransaction })
-
-            // on reset les champs du formulaire apres l'ajout
-            setName('')
-            setAmount('')
         } catch {
             // si ca plante on fait rien (le serveur est peut etre eteint)
             console.error('Erreur lors de l\'ajout de la transaction')
@@ -342,160 +226,16 @@ function App() {
 
             {/* grille formulaire + graphique */}
             <div className="main-grid">
-                {/* formulaire d'ajout */}
-                <div className="panel">
-                    <h2>Nouvelle transaction</h2>
-                    <form onSubmit={handleSubmit}>
-                        <div className="type-selector">
-                            <button
-                                type="button"
-                                className={`type-btn ${type === 'depense' ? 'expense-selected' : ''}`}
-                                onClick={() => setType('depense')}
-                            >
-                                Depense
-                            </button>
-                            <button
-                                type="button"
-                                className={`type-btn ${type === 'revenu' ? 'income-selected' : ''}`}
-                                onClick={() => setType('revenu')}
-                            >
-                                Revenu
-                            </button>
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="input-name">Description</label>
-                            <input
-                                id="input-name"
-                                type="text"
-                                placeholder="Ex: Courses au marche"
-                                value={name}
-                                onChange={e => setName(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="input-amount">Montant (EUR)</label>
-                            <input
-                                id="input-amount"
-                                type="number"
-                                placeholder="0.00"
-                                min="0.01"
-                                step="0.01"
-                                value={amount}
-                                onChange={e => setAmount(e.target.value)}
-                            />
-                        </div>
-
-                        <div className="form-group">
-                            <label htmlFor="input-category">Categorie</label>
-                            <select
-                                id="input-category"
-                                value={category}
-                                onChange={e => setCategory(e.target.value as Category)}
-                            >
-                                {CATEGORIES.map(cat => (
-                                    <option key={cat} value={cat}>
-                                        {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                                    </option>
-                                ))}
-                            </select>
-                        </div>
-
-                        <button type="submit" className="btn-add">
-                            Ajouter la transaction
-                        </button>
-                    </form>
-                </div>
-
-                {/* panneau du graphique */}
-                <div className="panel chart-panel">
-                    <h2>Repartition</h2>
-                    <div className="chart-tabs">
-                        <button
-                            className={`chart-tab ${chartView === 'depenses' ? 'active' : ''}`}
-                            onClick={() => setChartView('depenses')}
-                        >
-                            Depenses
-                        </button>
-                        <button
-                            className={`chart-tab ${chartView === 'revenus' ? 'active' : ''}`}
-                            onClick={() => setChartView('revenus')}
-                        >
-                            Revenus
-                        </button>
-                    </div>
-                    <div className="chart-wrapper">
-                        {chartTransactions.length > 0 ? (
-                            <canvas ref={chartRef}></canvas>
-                        ) : (
-                            <p className="no-data">Aucune donnee a afficher</p>
-                        )}
-                    </div>
-                </div>
+                <TransactionForm onSubmit={handleAddTransaction} />
+                <BudgetChart transactions={state.transactions} theme={theme} />
             </div>
 
             {/* historique des transactions */}
-            <div className="panel history-section">
-                <div className="history-header">
-                    <h2>Historique des transactions</h2>
-                    {state.transactions.length > 0 && (
-                        <button
-                            className="btn-reset"
-                            onClick={handleReset}
-                            title="Effacer tout l'historique"
-                        >
-                            Tout effacer
-                        </button>
-                    )}
-                </div>
-
-                <div className="filter-row">
-                    <button
-                        className={`filter-btn ${filter === 'tout' ? 'active' : ''}`}
-                        onClick={() => setFilter('tout')}
-                    >
-                        Tout
-                    </button>
-                    {CATEGORIES.map(cat => (
-                        <button
-                            key={cat}
-                            className={`filter-btn ${filter === cat ? 'active' : ''}`}
-                            onClick={() => setFilter(cat)}
-                        >
-                            {cat.charAt(0).toUpperCase() + cat.slice(1)}
-                        </button>
-                    ))}
-                </div>
-
-                {filteredTransactions.length === 0 ? (
-                    <p className="no-data">Aucune transaction trouvee</p>
-                ) : (
-                    <ul className="transactions-list">
-                        {filteredTransactions.map(t => (
-                            <li key={t.id} className="transaction-item">
-                                <div className="transaction-info">
-                                    <span className="name">{t.name}</span>
-                                    <span className="category">{t.category}</span>
-                                    <span className="date">{t.date}</span>
-                                </div>
-                                <div className="transaction-right">
-                                    <span className={`transaction-amount ${t.type === 'revenu' ? 'positive' : 'negative'}`}>
-                                        {t.type === 'revenu' ? '+' : '-'}{formatMoney(t.amount)}
-                                    </span>
-                                    <button
-                                        className="btn-delete"
-                                        onClick={() => handleDelete(t.id)}
-                                        title="Supprimer"
-                                    >
-                                        x
-                                    </button>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </div>
+            <TransactionList
+                transactions={state.transactions}
+                onDelete={handleDelete}
+                onReset={handleReset}
+            />
         </div>
     )
 }
