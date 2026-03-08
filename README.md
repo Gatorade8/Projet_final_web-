@@ -36,6 +36,7 @@ L'app sera dispo sur `http://localhost:5173`
 - Filtre des transactions par categorie
 - Supression de transactions
 - Sauvegarde dans un fichier `data/transactions.json` via le serveur Express
+- Site déployé sur https://projet-final-web-cjuf.onrender.com/ (Forfait gratuit donc une fois que le server se restart au bout de 15 min, les données ajouté/supprimer sont perdu. Pas eu le temps de mettre en place une base de donnée qui sauvegarde en PROD.)
 
 ## Technologies
 
@@ -43,3 +44,4 @@ L'app sera dispo sur `http://localhost:5173`
 - Vite
 - Chart.js
 - Express.js (Backend)
+- Render (PROD)

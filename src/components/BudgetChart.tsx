@@ -12,7 +12,7 @@ type ChartProps = {
     theme: 'light' | 'dark'
 }
 
-// composant pour le graphique en doughnut
+// composant pour le graphique en donut
 function BudgetChart({ transactions, theme }: ChartProps) {
     const [chartView, setChartView] = useState<'depenses' | 'revenus'>('depenses')
 
@@ -51,7 +51,7 @@ function BudgetChart({ transactions, theme }: ChartProps) {
         const labelColor = theme === 'dark' ? '#b8a898' : '#7a6652'
         const borderCol = theme === 'dark' ? 'rgba(26, 20, 16, 0.8)' : 'rgba(245, 239, 230, 0.8)'
 
-        // creation du doughnut chart
+        // creation du donut chart
         chartInstance.current = new Chart(chartRef.current, {
             type: 'doughnut',
             data: {

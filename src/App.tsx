@@ -30,7 +30,7 @@ export type Transaction = {
     date: string
 }
 
-// couleurs adaptees au theme bois pour le chart
+// couleurs 
 export const CATEGORY_COLORS: Record<string, string> = {
     alimentation: '#d4a056',
     transport: '#5b8c5a',
@@ -70,7 +70,7 @@ async function loadTransactions(): Promise<Transaction[]> {
     }
 }
 
-// le reducer gere juste le state local maintenant
+
 // les appel api sont fait dans les handlers avant le dispatch
 function budgetReducer(state: BudgetState, action: BudgetAction): BudgetState {
     switch (action.type) {
