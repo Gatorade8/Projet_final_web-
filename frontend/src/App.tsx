@@ -3,8 +3,8 @@ import TransactionForm from './components/TransactionForm'
 import BudgetChart from './components/BudgetChart'
 import TransactionList from './components/TransactionList'
 
-// La liste de toutes les categories qu'on a le droit d'utiliser dans le projet.
-// "as const" sert a dire a TypeScript que cette liste ne changera jamais. C'est du solide.
+// Liste des catégories disponibles pour les transactions
+// L'utilisation de "as const" permet à TypeScript de considérer ce tableau comme immuable.
 export const CATEGORIES = [
     'alimentation',
     'transport',
@@ -16,190 +16,189 @@ export const CATEGORIES = [
     'autre',
 ] as const
 
-// Ici on cree un "type" grace a la liste ci-dessus, on aura le droit qu'a ces mots la. CA evite les fautes de frappes dans le code.
+// Création d'un type basé sur la liste ci-dessus, limitant les valeurs possibles à ces catégories.
 export type Category = typeof CATEGORIES[number]
 
-// On definit les deux seuls moyens pour l'argent: revenu (entree) ou depense (sortie)
+// Définition des types possibles pour une transaction
 export type TransactionType = 'revenu' | 'depense'
 
-// C'est le carnet de sante (le moule exact) de ce a quoi ressemble un achat pour TypeScript.
+// Interface décrivant la structure exacte d'une transaction pour TypeScript
 export type Transaction = {
-    id: string              // Le code barre unique pour pas confondre
-    name: string            // Le nom tapé par le mec 
-    amount: number          // Le prix
-    type: TransactionType   // Depense ou revenu
-    category: Category      // Dans quelle corbeille ca va (alimentation etc)
-    date: string            // La date de lajaout
+    id: string              // Identifiant unique
+    name: string            // Description de la transaction
+    amount: number          // Montant financier
+    type: TransactionType   // Si c'est un revenu ou une dépense
+    category: Category      // Catégorie associée
+    date: string            // Date au format AAAA-MM-JJ
 }
 
-// Un dictionnaire pour lier chaque categorie a une couleur precise hexa (pour le graphic plus tard)
+// Dictionnaire associant chaque catégorie à une couleur spécifique (utilisé pour les graphiques)
 export const CATEGORY_COLORS: Record<string, string> = {
-    alimentation: '#d4a056', // Orange sable
-    transport: '#5b8c5a',    // Vert
-    loisirs: '#c2785c',      // Rouge 
-    logement: '#8b6f47',     // Marron
-    sante: '#6b9e8a',        // Menthe
-    salaire: '#2e8b57',      // Vert vif
-    freelance: '#7a9e7e',    // Vert mousse
-    autre: '#9c8b7a',        // Gris
+    alimentation: '#d4a056',
+    transport: '#5b8c5a',
+    loisirs: '#c2785c',
+    logement: '#8b6f47',
+    sante: '#6b9e8a',
+    salaire: '#2e8b57',
+    freelance: '#7a9e7e',
+    autre: '#9c8b7a',
 }
 
-// Ca, c'est la forme globale de la memoire (le state), l'app contient juste une liste complete de transations
+// État global de l'application, contenant la liste complète des transactions
 type BudgetState = {
-    transactions: Transaction[] // Tableau (liste) qui contient toutes les transactions de la database
+    transactions: Transaction[]
 }
 
-// C'est le menu des ordres qu'on peut donner au "Reducer" (le mini manager de ton code)
+// Liste des actions possibles gérées par le reducer
 type BudgetAction =
-    | { type: 'ADD_TRANSACTION'; payload: Transaction }    // Action pour ajouter, avec le pti nveau "payload" a cote
-    | { type: 'DELETE_TRANSACTION'; payload: string }      // Action pour supprimer, on donne juste l'ID 
-    | { type: 'LOAD_TRANSACTIONS'; payload: Transaction[] } // Action pour charger la db entiere au demarrage (venant du backend Node)
-    | { type: 'RESET_TRANSACTIONS' }                       // Action nuking, pour tout remettre au point zero.
+    | { type: 'ADD_TRANSACTION'; payload: Transaction }    // Ajout d'une nouvelle transaction
+    | { type: 'DELETE_TRANSACTION'; payload: string }      // Suppression via l'identifiant (ID)
+    | { type: 'LOAD_TRANSACTIONS'; payload: Transaction[] } // Chargement initial des données
+    | { type: 'RESET_TRANSACTIONS' }                       // Réinitialisation complète de l'historique
 
-// L'adresse locale pour parler avec le backend Node.js. (Vite la proxy d'ou le /api direct)
+// URL de l'API Node.js locale (configurée via le proxy Vite)
 const API_URL = '/api/transactions'
-// Le nom de la cle pour chercher si tu preferai le theme noir ou blanc (sauvegardé ds les coockies html prcq)
+// Clé utilisée pour sauvegarder le thème choisi dans le localStorage du navigateur
 const THEME_KEY = 'budget_theme'
 
-// Une fonction "async" pour aller recuperer la donnee (l'API Node). Async parce que fetch prend qq millisecondes et fo po bloquer l ecran
+// Fonction asynchrone pour récupérer les données depuis le serveur sans bloquer l'interface
 async function loadTransactions(): Promise<Transaction[]> {
     try {
-        const response = await fetch(API_URL) // TocToc, je veux les donnees.
-        const data: Transaction[] = await response.json() // transforme le charabia du serveur en bon Javascript
-        return data // On livre le colis fini
+        const response = await fetch(API_URL)
+        const data: Transaction[] = await response.json() // Conversion de la réponse JSON en objet JavaScript
+        return data
     } catch {
-        // En cas de crash serveur on retourne rien pour que lappli reagisse gentiement
+        // En cas d'erreur avec le serveur, on retourne un tableau vide pour éviter un crash
         return []
     }
 }
 
-// Le grand chef reacte (Reducer). C'est lui qui controle a 100% comment les donnéss sont manipulées
+// Le reducer agit comme le gestionnaire de l'état global de l'application
 function budgetReducer(state: BudgetState, action: BudgetAction): BudgetState {
     switch (action.type) { 
         case 'ADD_TRANSACTION': {
-            // Principe de React : on decoupe l'ancien tableau pour coller le nouveau deussus (immmutabilité)
+            // Création d'un nouveau tableau contenant l'ancienne liste et la nouvelle transaction (respect de l'immuabilité)
             const updated = [action.payload, ...state.transactions]
-            return { transactions: updated } // Re-donne un nouveau tablleau
+            return { transactions: updated }
         }
         case 'DELETE_TRANSACTION': {
-            // Filter : on garde TT SAUF celle dont l'id doit degager mtnant.
+            // Filtrage pour ne conserver que les transactions dont l'ID est différent de celui fourni
             const updated = state.transactions.filter(t => t.id !== action.payload)
             return { transactions: updated }
         }
         case 'LOAD_TRANSACTIONS':
-            // Remplacement total: au demarrage
+            // Remplacement total des transactions actuelles par les données chargées
             return { transactions: action.payload }
             
         case 'RESET_TRANSACTIONS': {
-            // Table rase on crache []
+            // Vidage complet de l'historique
             return { transactions: [] }
         }
         default:
-            return state // si l'action nexiste pas on bouge as mmmr !
+            return state // Retourne l'état actuel si l'action n'est pas reconnue
     }
 }
 
-// composant central qui asseble lé puzzles
+// Composant central regroupant toute la logique applicative
 function App() {
-    // [variable, outil-pour-changer] on met une foncionn ds useStatte pour kil calcul le true that quau recharagememnt de page !
+    // Gestion de l'état du thème (clair/sombre). L'état initial est calculé au chargement en lisant le localStorage.
     const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-        const saved = localStorage.getItem(THEME_KEY) // on li ds la console du vavgiteur
-        return (saved === 'dark') ? 'dark' : 'light' // teernaire rapide ! 
+        const saved = localStorage.getItem(THEME_KEY)
+        return (saved === 'dark') ? 'dark' : 'light'
     })
 
-    // Le state centralisé avec son dispatch (pour balancer d rodes de reducer definis en haud )
+    // Initialisation du state centralisé et de son dispatch via useReducer
     const [state, dispatch] = useReducer(budgetReducer, { transactions: [] })
 
-    // UseEfect permet de brancher l effet a un evvement (ici: le stat [Theme])
+    // Déclenchement d'un effet secondaire à chaque changement du state 'theme'
     useEffect(() => {
-        document.documentElement.setAttribute('data-theme', theme) // on injecte pr qie le css se declenche.
-        localStorage.setItem(THEME_KEY, theme) // on suuvasgrde l choioixx pour la pchreine session !
+        document.documentElement.setAttribute('data-theme', theme) // Application de l'attribut HTML pour le CSS
+        localStorage.setItem(THEME_KEY, theme) // Sauvegarde de la préférence pour la prochaine session
     }, [theme])
 
-    // UseCalback c une techeniq pro. ça gèle l a fouctnino ds la methoire pour past que sa prene de perfs pour r1 a cq rehcagrment !
+    // Utilisation de useCallback pour mémoriser la fonction et éviter des re-rendus de performance inutiles
     const toggleTheme = useCallback(() => {
-        setTheme(prev => prev === 'light' ? 'dark' : 'light') // on rennverss d lun a a lotre 
+        setTheme(prev => prev === 'light' ? 'dark' : 'light')
     }, [])
 
-    // Sans ls [rcien] a la fiin , le cOded ne ss exxcecute k1 SEULE FOX a l ovverturre.
+    // Chargement dynamique des données lors du tout premier montage du composant
     useEffect(() => {
-        loadTransactions().then(loaded => { // un fos ks donnéés aririve du serrvuers... !
-            dispatch({ type: 'LOAD_TRANSACTIONS', payload: loaded }) // on disqatch au redudver. 
+        loadTransactions().then(loaded => {
+            dispatch({ type: 'LOAD_TRANSACTIONS', payload: loaded })
         })
-    }, []) // VOliAA.. 
+    }, [])
 
-    // OON calcule des l oucertture (varibles volantes tres dynaumques sans sate ! ) : 
+    // Calcul du total des revenus (mise à jour automatique basée sur l'état)
     const totalRevenu = state.transactions
-        .filter(t => t.type === 'revenu') // on reftin q que les plus +++
-        .reduce((sum, t) => sum + t.amount, 0) // eT en fait de lamaths .. (Someme cumulatives)
+        .filter(t => t.type === 'revenu')
+        .reduce((sum, t) => sum + t.amount, 0)
 
-    // Pareille pr lle depnse -
+    // Calcul du total des dépenses
     const totalDepense = state.transactions
         .filter(t => t.type === 'depense')
         .reduce((sum, t) => sum + t.amount, 0)
 
-    // Logqiue cmptablz! l 
+    // Calcul du solde final
     const solde = totalRevenu - totalDepense
 
-    // HNAler (Le tuyyo descndaitt pour la formmaulairet ). .
+    // Fonction asynchrone pour gérer l'ajout d'une nouvelle transaction
     async function handleAddTransaction(name: string, amount: number, type: TransactionType, category: Category) {
-        // on faait le mold 
+        // Préparation de l'objet transaction
         const newTransaction: Transaction = {
-            id: Date.now().toString() + Math.random().toString(36).substring(2), // cration de faux uuidd. 
+            id: Date.now().toString() + Math.random().toString(36).substring(2), // Génération d'un UUID simple
             name,
             amount,
             type,
             category,
-            date: new Date().toISOString().split('T')[0], // pour aavoiru un YYYY-MM-DD
+            date: new Date().toISOString().split('T')[0], // Formatage de la date à la racine ISO (YYYY-MM-DD)
         }
 
         try {
-            // on envvoie le msg POST a note api backendt (file : serve js) 
+            // Envoi de la donnée au backend Node.js via une requête POST
             await fetch(API_URL, {
                 method: 'POST', 
-                headers: { 'Content-Type': 'application/json' }, // on precise ks ont pparle jsoon !
-                body: JSON.stringify(newTransaction), // JSON srtrigiffit transforme le JAvsaCriprit object pr rnted ddabs l intrentnt. .
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTransaction), // Sérialisation de l'objet en JSON
             })
-            // l fchhiet etant mi auajourr, os peu dirre de desssineer le stzte !
+            // En cas de succès serveur, on notifie l'interface pour se mettre à jour
             dispatch({ type: 'ADD_TRANSACTION', payload: newTransaction })
         } catch {
             console.error('Erreur lors de l\'ajout de la transaction')
         }
     }
 
-    // handler poourl r sup[reimesr.. 
+    // Fonction de suppression de transaction
     async function handleDelete(id: string) {
         try {
-            await fetch(`${API_URL}/${id}`, { method: 'DELETE' }) // mthodel dde suupresion 
+            await fetch(`${API_URL}/${id}`, { method: 'DELETE' })
             dispatch({ type: 'DELETE_TRANSACTION', payload: id })
         } catch {
-            console.error('Erreur lors de la supression')
+            console.error('Erreur lors de la suppression')
         }
     }
 
-    // Handder destrution massif.. 
+    // Fonction asynchrone pour traiter la réinitialisation complète des logs
     async function handleReset() {
-        if (window.confirm('Tu veux vraiment effacer toutes les transactions ?')) { // popup navigateur.. ! 
+        if (window.confirm('Voulez-vous vraiment effacer toutes les transactions ?')) {
             try {
-                await fetch(API_URL, { method: 'DELETE' }) // onn tape la routet saNs num id = il va  too sacecager  .
-                dispatch({ type: 'RESET_TRANSACTIONS' }) //  ecrn tt blanc.. .
+                await fetch(API_URL, { method: 'DELETE' }) // La route sans paramètre ID gère l'effacement total de la collection
+                dispatch({ type: 'RESET_TRANSACTIONS' })
             } catch {
-                console.error('Erreur lors du reset')
+                console.error('Erreur lors de la réinitialisation')
             }
         }
     }
 
-    // FoCntion quii transfoort un vieux chfreff 4344 en "4 344,00 EUurR"
+    // Utilitaire de formatage pour l'affichage de la devise
     function formatMoney(val: number): string {
         return val.toLocaleString('fr-FR', {
-            minimumFractionDigits: 2, // fosrces d 2 deecimaell a l afffiaghtee !. .
+            minimumFractionDigits: 2, // Forcer l'affichage strict de 2 décimales
             maximumFractionDigits: 2,
-        }) + ' EUR' // et i rjooute la curencie . 
+        }) + ' EUR'
     }
 
     return (
         <div id="app">
-            {/* Header d l app avx le lgogo */}
             <header className="app-header">
                 <div className="logo-section">
                     <img src="/fiance_zen.png" alt="Finance Zen" className="logo-img" />
@@ -208,39 +207,34 @@ function App() {
                         <p className="subtitle">Simplifiez votre budget</p>
                     </div>
                 </div>
-                {/* btn pur r chanageer theeme ! */}
-                <button className="theme-toggle" onClick={toggleTheme} title="Changer le theme">
+                <button className="theme-toggle" onClick={toggleTheme} title="Changer le thème">
                     <span className="theme-icon">{theme === 'light' ? 'Sombre' : 'Clair'}</span>
                 </button>
             </header>
 
-            {/* grosse cartee pourr lles srlde  */}
             <div className="balance-card">
                 <div className="label">Solde actuel</div>
                 <div className="amount">{formatMoney(solde)}</div>
             </div>
 
-            {/*  ds les dx boites pttites poourr revn & dceepense  !!  */}
             <div className="summary-row">
                 <div className="summary-box">
                     <div className="label">Revenus</div>
-                    {/* je metrt le plus devvnat direct car ctj positive ls reveuns e */}
                     <div className="amount income">+{formatMoney(totalRevenu)}</div>
                 </div>
                 <div className="summary-box">
-                    <div className="label">Depenses</div>
+                    <div className="label">Dépenses</div>
                     <div className="amount expense">-{formatMoney(totalDepense)}</div>
                 </div>
             </div>
 
-            {/* ds grlle grid cs pur mettr forrrm e f garpshqies cot à cote. */}
             <div className="main-grid">
-                {/* On psse en prop osnomubbitt la foicntionnn pour kil ouises ns ls rendree ... */}
+                {/* Passage en prop de la fonction associée pour autoriser l'enfant à communiquer */}
                 <TransactionForm onSubmit={handleAddTransaction} />
                 <BudgetChart transactions={state.transactions} theme={theme} />
             </div>
 
-            {/* O pass ls donennes pure , e t les fdicontn pr lr ls outiill (suprimedr) au  gros copopsabrt litse .  */}
+            {/* Injection des données consolidées et des méthodes utilitaires à l'espace liste de l'interface */}
             <TransactionList
                 transactions={state.transactions}
                 onDelete={handleDelete}
