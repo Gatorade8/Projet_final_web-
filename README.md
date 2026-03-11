@@ -4,28 +4,37 @@ Application web pour gerer ses revenus et depenses avec des graphiques.
 
 ## Comment lancer le projet
 
-### 1. Installer les dependances
+Le projet est divisé en 2 dossiers : un pour le backend et un pour le frontend.
+Il faut ouvrir deux terminaux différents.
 
+### 1. Lancer le backend
+
+Ouvrir un premier terminal, se déplacer dans le dossier `backend` et installer les dépendances :
 ```bash
+cd backend
 npm install
 ```
 
-### 2. Lancer le serveur backend
-
-Ouvre un terminal et tape :
+Ensuite, démarrer l'API :
 ```bash
-npm run server
+npm start
 ```
-Le back sera sur `http://localhost:3001`
+Le serveur répondra sur `http://localhost:3001`
 
-### 3. Lancer le serveur de developpement (frontend)
+### 2. Lancer le frontend (interface)
 
-Ouvre un **deuxieme** terminal :
+Ouvrir un deuxième terminal, aller dans le dossier `frontend` et installer les modules :
+```bash
+cd frontend
+npm install
+```
+
+Puis lancer le serveur de développement Vite :
 ```bash
 npm run dev
 ```
 
-L'app sera dispo sur `http://localhost:5173`
+L'application sera disponible sur `http://localhost:5173`
 
 
 ## Fonctionnalites

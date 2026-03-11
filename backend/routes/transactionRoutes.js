@@ -1,33 +1,18 @@
-// serveur express pour le gestionnaire de budget
-// il lit et ecrit dans data/transactions.json comme bdd
 import express from 'express'
-import cors from 'cors'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-const app = express()
-const PORT = process.env.PORT || 3001
+const router = express.Router()
 
 // en ESM y'a pas __dirname donc faut le reconstruir
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
+// vu qu'on est dans routes/ faut remonter d'un niveau avec path.dirname(path.dirname())
+const __dirname = path.dirname(path.dirname(__filename))
 
 // chemin vers le fichier json qui stock nos transactions
 const DATA_DIR = path.join(__dirname, 'data')
 const DATA_FILE = path.join(DATA_DIR, 'transactions.json')
-
-// on s'assure que le dossier data existe sinon ca va crash sur Render
-if (!fs.existsSync(DATA_DIR)) {
-    fs.mkdirSync(DATA_DIR, { recursive: true })
-}
-
-// middleware pour parser le json et autoriser les requete cross-origin
-app.use(cors())
-app.use(express.json())
-
-// on sert les fichiers statiques du front (le build de Vite)
-app.use(express.static(path.join(__dirname, 'dist')))
 
 // fonction utilitaire pour lire les trasactions depuis le fichier
 function readTransactions() {
@@ -46,14 +31,14 @@ function writeTransactions(transactions) {
     fs.writeFileSync(DATA_FILE, JSON.stringify(transactions, null, 4), 'utf-8')
 }
 
-// GET /api/transactions - recuperer toutes les transactons
-app.get('/api/transactions', (req, res) => {
+// GET / - recuperer toutes les transactons
+router.get('/', (req, res) => {
     const transactions = readTransactions()
     res.json(transactions)
 })
 
-// POST /api/transactions - ajouter une nouvelle transction
-app.post('/api/transactions', (req, res) => {
+// POST / - ajouter une nouvelle transction
+router.post('/', (req, res) => {
     const transactions = readTransactions()
     const newTransaction = req.body
 
@@ -74,8 +59,8 @@ app.post('/api/transactions', (req, res) => {
     res.status(201).json(newTransaction)
 })
 
-// DELETE /api/transactions/:id - suprimer une transacton par son id
-app.delete('/api/transactions/:id', (req, res) => {
+// DELETE /:id - suprimer une transacton par son id
+router.delete('/:id', (req, res) => {
     const transactions = readTransactions()
     const filtered = transactions.filter(t => t.id !== req.params.id)
 
@@ -88,19 +73,10 @@ app.delete('/api/transactions/:id', (req, res) => {
     res.json({ message: 'Transaction supprimee' })
 })
 
-// DELETE /api/transactions - tout effacer (reset complet)
-app.delete('/api/transactions', (req, res) => {
+// DELETE / - tout effacer (reset complet)
+router.delete('/', (req, res) => {
     writeTransactions([])
     res.json({ message: 'Toutes les transactions on ete supprimees' })
 })
 
-// pour toutes les autres routes on renvoie l'index.html de React (SPAs)
-app.use((req, res) => {
-    res.sendFile(path.join(__dirname, 'dist', 'index.html'))
-})
-
-// on demarre le serveur
-app.listen(PORT, () => {
-    console.log(`Serveur demarre sur le port ${PORT}`)
-    console.log(`Les donnees sont stockees dans ${DATA_FILE}`)
-})
+export default router
